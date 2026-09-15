@@ -1,15 +1,26 @@
 [Unit]
-Description=Small description of the service
-After=network.target
+Description=tsbridge (__APP__) - Tailscale-to-Unix-socket bridge
+Documentation=https://github.com/mkettn/tsbridge
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=__APP__
 Group=__APP__
 WorkingDirectory=__INSTALL_DIR__/
-ExecStart=__INSTALL_DIR__/script
-StandardOutput=append:/var/log/__APP__/__APP__.log
-StandardError=inherit
+ExecStart=__INSTALL_DIR__/tsbridge -config __INSTALL_DIR__/config.yaml
+EnvironmentFile=__INSTALL_DIR__/tsbridge.env
+Restart=on-failure
+RestartSec=5s
+
+StandardOutput=journal
+StandardError=journal
+
+# Unix sockets (bridge sockets + the runtime management socket) are
+# created here at /run/__APP__, recreated on every start.
+RuntimeDirectory=__APP__
+RuntimeDirectoryMode=0750
 
 ### Depending on specificities of your service/app, you may need to tweak these
 ### .. but this should be a good baseline
@@ -18,6 +29,9 @@ StandardError=inherit
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=__INSTALL_DIR__ __DATA_DIR__
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 RestrictNamespaces=yes
 RestrictRealtime=yes
@@ -25,7 +39,6 @@ DevicePolicy=closed
 ProtectClock=yes
 ProtectHostname=yes
 ProtectProc=invisible
-ProtectSystem=full
 ProtectControlGroups=yes
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
@@ -33,7 +46,7 @@ LockPersonality=yes
 SystemCallArchitectures=native
 SystemCallFilter=~@clock @debug @module @mount @obsolete @reboot @setuid @swap @cpu-emulation @privileged
 
-# Denying access to capabilities that should not be relevant for webapps
+# Denying access to capabilities that should not be relevant for tsbridge
 # Doc: https://man7.org/linux/man-pages/man7/capabilities.7.html
 CapabilityBoundingSet=~CAP_RAWIO CAP_MKNOD
 CapabilityBoundingSet=~CAP_AUDIT_CONTROL CAP_AUDIT_READ CAP_AUDIT_WRITE

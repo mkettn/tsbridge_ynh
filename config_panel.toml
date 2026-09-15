@@ -1,0 +1,39 @@
+#:schema https://github.com/YunoHost/apps/raw/main/schemas/config_panel.v1.schema.json
+
+version = "1.0"
+
+[main]
+name.en = "tsbridge configuration"
+name.fr = "Configuration de tsbridge"
+services = ["__APP__"]
+
+    [main.tailnet]
+    name.en = "Tailnet connection"
+    name.fr = "Connexion au tailnet"
+    help.en = "The bridges: list itself (which sockets map to which tailnet targets) is not editable here -- see the admin doc for how to manage it."
+    help.fr = "La liste bridges: elle-même (quels sockets correspondent à quelles cibles du tailnet) n'est pas modifiable ici -- voir la documentation d'administration pour savoir comment la gérer."
+
+        [main.tailnet.ts_hostname]
+        ask.en = "Node name on the tailnet"
+        ask.fr = "Nom du nœud sur le tailnet"
+        type = "string"
+        bind = "hostname:__INSTALL_DIR__/config.yaml"
+
+        [main.tailnet.control_url]
+        ask.en = "Control server URL"
+        ask.fr = "URL du serveur de contrôle"
+        type = "url"
+        optional = true
+        help.en = "Empty uses Tailscale's own control server. Set only to point at a self-hosted Headscale instance."
+        help.fr = "Laisser vide pour utiliser le serveur de contrôle de Tailscale. À renseigner uniquement pour pointer vers une instance Headscale auto-hébergée."
+        bind = "control_url:__INSTALL_DIR__/config.yaml"
+
+        [main.tailnet.ts_authkey]
+        ask.en = "Tailscale (or Headscale) auth key"
+        ask.fr = "Clé d'authentification Tailscale (ou Headscale)"
+        type = "string"
+        optional = true
+        redact = true
+        help.en = "Only used to (re-)register this node. Changing this does not affect an already-registered node; see the admin doc."
+        help.fr = "Utilisée uniquement pour (ré-)enregistrer ce nœud. La modifier n'affecte pas un nœud déjà enregistré ; voir la documentation d'administration."
+        bind = "TS_AUTHKEY:__INSTALL_DIR__/tsbridge.env"

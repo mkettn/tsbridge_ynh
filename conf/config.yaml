@@ -1,0 +1,34 @@
+# tsbridge config, managed by the tsbridge YunoHost package.
+#
+# hostname, control_url and the auth key (kept separately in tsbridge.env,
+# never here) can be changed from the webadmin's app config panel, which
+# edits this file's matching KEY: VALUE line in place and restarts the
+# service. Everything else -- including the bridges: list itself -- is
+# not covered by the config panel; see the app's admin doc for how to
+# manage bridges (by hand + a restart, or live through the management
+# socket below).
+#
+# A hand-edited bridges: list survives a `yunohost service restart`, but
+# NOT an app upgrade: ynh_config_add detects this file no longer matches
+# what the package last wrote, backs up your version (suffixed .bkp) next
+# to it, and replaces it with a freshly rendered one from the current app
+# settings -- so a hand-edited bridges: list needs to be re-applied
+# from the .bkp file after upgrading. Bridges added through the
+# management socket instead (see below) are stored in
+# managed-bridges.yaml and are not affected by this.
+
+hostname: "__TS_HOSTNAME__"
+state_dir: __DATA_DIR__
+ephemeral: false
+control_url: "__CONTROL_URL__"
+socket_mode: "0660"
+
+# Runtime bridge management API, enabled by default so bridges can be
+# added/removed without editing this file or restarting the service --
+# see the admin doc for example curl commands. Reachable only from the
+# server itself (e.g. over SSH), since this app has no web-exposed
+# domain/path.
+management_socket: /run/__APP__/control.sock
+management_socket_mode: "0600"
+
+bridges: []
