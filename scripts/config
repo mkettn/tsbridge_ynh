@@ -7,7 +7,9 @@
 # ts_authkey uses bind = "null" instead of a plain file bind: a plain
 # bind mirrors the value into settings.yml as well as the file, which
 # would put the auth key in cleartext in the app's regular settings.
-# get__/set__ below read/write tsbridge.env only.
+# Only set__ts_authkey is defined below (no get__ts_authkey), so the
+# key is write-only -- it can be replaced but never read back, through
+# this panel or `yunohost app config get`.
 
 #=================================================
 # IMPORT GENERIC HELPERS
@@ -21,12 +23,8 @@ ynh_abort_if_errors
 ### setting into the script environment (same as install/upgrade/etc).
 
 #=================================================
-# SPECIFIC GETTER/SETTER FOR ts_authkey
+# SPECIFIC SETTER FOR ts_authkey (write-only, see note above)
 #=================================================
-
-get__ts_authkey() {
-    ynh_read_var_in_file --file="$install_dir/tsbridge.env" --key="TS_AUTHKEY"
-}
 
 set__ts_authkey() {
     ynh_write_var_in_file --file="$install_dir/tsbridge.env" --key="TS_AUTHKEY" --value="$ts_authkey"

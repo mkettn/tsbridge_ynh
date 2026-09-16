@@ -5,7 +5,6 @@ packaging_format = 2
 id = "tsbridge"
 name = "tsbridge"
 description.en = "Expose Tailscale tailnet services locally as Unix sockets"
-description.fr = "Expose des services d'un tailnet Tailscale sous forme de sockets Unix locales"
 
 version = "0.0.1~rc1~ynh1"
 
@@ -31,29 +30,23 @@ ram.runtime = "20M"
 [install]
     [install.ts_hostname]
     ask.en = "Node name on the tailnet"
-    ask.fr = "Nom du nœud sur le tailnet"
     type = "string"
     optional = true
     default = ""
     help.en = "The name this node will show up as in the tailnet / Tailscale admin console. Leave empty to use this app's own instance name."
-    help.fr = "Le nom sous lequel ce nœud apparaîtra dans le tailnet / la console d'administration Tailscale. Laisser vide pour utiliser le nom de l'instance de cette app."
 
     [install.control_url]
     ask.en = "Control server URL (leave empty for Tailscale's own)"
-    ask.fr = "URL du serveur de contrôle (laisser vide pour utiliser celui de Tailscale)"
     type = "url"
     optional = true
     default = ""
     help.en = "Set this only to register against a self-hosted Headscale instance instead of Tailscale's own control server. Must be an absolute https:// URL if set."
-    help.fr = "À renseigner uniquement pour s'enregistrer auprès d'une instance Headscale auto-hébergée plutôt que du serveur de contrôle de Tailscale. Doit être une URL absolue en https:// si renseignée."
 
     [install.ts_authkey]
     ask.en = "Tailscale (or Headscale) auth key"
-    ask.fr = "Clé d'authentification Tailscale (ou Headscale)"
     type = "password"
     optional = true
     help.en = "Optional. Leave empty to approve this node interactively via a one-time URL logged on first start (see 'yunohost service log <name>' or the systemd journal). For unattended provisioning, generate a tagged, ACL-scoped auth key instead. Never share this key; it is stored in a dedicated environment file readable only by the tsbridge service account, not in the app's regular settings."
-    help.fr = "Optionnel. Laissez vide pour approuver ce nœud de façon interactive via une URL à usage unique inscrite dans le journal au premier démarrage (voir 'yunohost service log <nom>' ou le journal systemd). Pour un provisionnement automatisé, générez plutôt une clé d'authentification taguée et restreinte par ACL. Ne partagez jamais cette clé ; elle est stockée dans un fichier d'environnement dédié, lisible uniquement par le compte de service tsbridge, et non dans les réglages habituels de l'app."
 
 [resources]
     [resources.sources.main]

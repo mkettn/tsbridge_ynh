@@ -17,9 +17,14 @@ or use a domain/path.
 ## Adding, removing and changing bridges
 
 `config.yaml`'s `bridges:` list has no hot-reload: add, remove, or
-change a bridge by editing `__INSTALL_DIR__/config.yaml`, then
+change a bridge by editing it, then restart the service. Edit it from
+the app's own shell rather than over plain SSH, so it's opened as the
+`__APP__` user with `__INSTALL_DIR__` already the working directory:
 
 ```sh
+yunohost app shell __APP__
+$ nano config.yaml   # or your editor of choice
+$ exit
 yunohost service restart __APP__
 ```
 
@@ -67,9 +72,10 @@ The webadmin's app config panel (Apps > __APP__ > Config panel) exposes:
 - **Node name on the tailnet** (`hostname:` in `config.yaml`)
 - **Control server URL** (`control_url:` in `config.yaml`) -- empty uses
   Tailscale's own; set it to switch to a self-hosted Headscale instance
-- **Auth key** (`TS_AUTHKEY` in `tsbridge.env`) -- only affects
-  registration; changing it does **not** re-register an already-known
-  node
+- **Set a new auth key** (`TS_AUTHKEY` in `tsbridge.env`) -- write-only,
+  the current key is never displayed or readable back; only affects
+  registration, and changing it does **not** re-register an
+  already-known node
 
 Any change restarts the `__APP__` service automatically. The `bridges:`
 list itself is intentionally not exposed here -- see the previous

@@ -1,10 +1,14 @@
 tsbridge is now running with an empty `bridges:` list -- it joined the
 tailnet, but isn't proxying anything yet.
 
-To add your first bridge, SSH in and edit `__INSTALL_DIR__/config.yaml`'s
-`bridges:` list (a commented example is already there), then:
+To add your first bridge, edit `config.yaml`'s `bridges:` list (a
+commented example is already there) from the app's own shell, then
+restart it:
 
 ```sh
+yunohost app shell __APP__
+$ nano config.yaml   # or your editor of choice
+$ exit
 yunohost service restart __APP__
 ```
 

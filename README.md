@@ -8,8 +8,6 @@ It shall NOT be edited by hand.
 [![Integration level](https://dash.yunohost.org/integration/tsbridge.svg)](https://dash.yunohost.org/appci/app/tsbridge) ![Working status](https://ci-apps.yunohost.org/ci/badges/tsbridge.status.svg) ![Maintenance status](https://ci-apps.yunohost.org/ci/badges/tsbridge.maintain.svg)<br>
 [![Install tsbridge with YunoHost](https://install-app.yunohost.org/install-with-yunohost.svg)](https://install-app.yunohost.org/?app=tsbridge)
 
-*[Lire ce readme en français.](./README_fr.md)*
-
 > *This package allows you to install tsbridge quickly and simply on a YunoHost server.
 If you don't have YunoHost, please consult [the guide](https://doc.yunohost.org/admin/get_started/install_on/) to learn how to install it.*
 
@@ -38,9 +36,10 @@ configured entirely through a YAML file (edit + restart, no hot-reload).
 
 * This app installs no domain, no path, and no nginx configuration:
   `tsbridge` has nothing to serve over HTTP(S) to end users. Bridges are
-  added by hand-editing the config file over SSH and restarting the
-  service; only a few scalar settings (node name, control server, auth
-  key) are exposed through the app's config panel.
+  added by editing the config file from the app's own shell
+  (`yunohost app shell tsbridge`) and restarting the service; only a
+  few scalar settings (node name, control server, auth key) are
+  exposed through the app's config panel.
 * The `bridges:` list -- which sockets map to which tailnet targets -- is
   not part of the install wizard or the config panel; see the app's admin
   documentation for how to manage it after installing.
