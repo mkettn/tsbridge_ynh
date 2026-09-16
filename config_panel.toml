@@ -1,0 +1,36 @@
+#:schema https://github.com/YunoHost/apps/raw/main/schemas/config_panel.v1.schema.json
+
+version = "1.0"
+
+[main]
+name.en = "tsbridge configuration"
+services = ["__APP__"]
+
+    [main.tailnet]
+    name.en = "Tailnet connection"
+    help.en = "The bridges: list itself (which sockets map to which tailnet targets) is not editable here -- see the admin doc for how to manage it."
+
+        [main.tailnet.ts_hostname]
+        ask.en = "Node name on the tailnet"
+        type = "string"
+        bind = "hostname:__INSTALL_DIR__/config.yaml"
+
+        [main.tailnet.control_url]
+        ask.en = "Control server URL"
+        type = "url"
+        optional = true
+        help.en = "Empty uses Tailscale's own control server. Set only to point at a self-hosted Headscale instance."
+        bind = "control_url:__INSTALL_DIR__/config.yaml"
+
+        [main.tailnet.ts_authkey]
+        ask.en = "Set a new Tailscale (or Headscale) auth key"
+        type = "string"
+        optional = true
+        redact = true
+        help.en = "Write-only: the current key is never displayed or readable back through this panel, only replaced. Only used to (re-)register this node -- changing this does not affect an already-registered node; see the admin doc. Stored only in tsbridge.env, never in this app's settings."
+        # bind = "null" (rather than a plain "KEY:FILE" bind) so this
+        # never gets mirrored into settings.yml in cleartext -- a plain
+        # bind writes *both* the file and the setting. Only set__ts_authkey
+        # is defined in scripts/config (no get__ts_authkey), so the value
+        # is write-only: it can be replaced but never read back.
+        bind = "null"
