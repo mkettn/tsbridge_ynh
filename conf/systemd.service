@@ -14,14 +14,18 @@ EnvironmentFile=__INSTALL_DIR__/tsbridge.env
 Restart=on-failure
 RestartSec=5s
 
+# Lets tsbridge chown a bridge socket to config.yaml's socket_group:
+# www-data, so a local reverse proxy (nginx) can reach it. Paired with
+# socket_group: www-data in conf/config.yaml -- either alone is inert.
+SupplementaryGroups=www-data
+
 StandardOutput=journal
 StandardError=journal
 
-# Unix sockets (bridge sockets + the runtime management socket) are
-# created here at /run/__APP__, recreated on every start. Mode 0755 so
-# client processes outside the __APP__ group can traverse into the
-# directory at all -- access control happens at each socket itself
-# (its own group + socket_mode), not at the directory.
+# Bridge sockets are created here at /run/__APP__, recreated on every
+# start. Mode 0755 so client processes outside the __APP__ group can
+# traverse into the directory at all -- access control happens at each
+# socket itself (its own group + socket_mode), not at the directory.
 RuntimeDirectory=__APP__
 RuntimeDirectoryMode=0755
 

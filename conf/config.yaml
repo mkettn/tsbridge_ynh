@@ -1,34 +1,52 @@
 # tsbridge config, managed by the tsbridge YunoHost package.
 #
-# hostname, control_url and the auth key (kept separately in tsbridge.env,
-# never here) can be changed from the webadmin's app config panel, which
-# edits this file's matching KEY: VALUE line in place and restarts the
-# service. Everything else -- including the bridges: list itself -- is
-# not covered by the config panel; see the app's admin doc for how to
-# manage bridges (by hand + a restart, or live through the management
-# socket below).
+# hostname and control_url (the auth key is kept separately in
+# tsbridge.env, never here) can be changed from the webadmin's app
+# config panel, which edits this file's matching KEY: VALUE line in
+# place and restarts the service. Everything else -- including the
+# bridges: list itself -- is not covered by the config panel: add,
+# remove, or change a bridge by editing bridges: below, then
+# `yunohost service restart __APP__` (there is no hot-reload). See the
+# app's admin doc for details.
 #
 # A hand-edited bridges: list survives a `yunohost service restart`, but
 # NOT an app upgrade: ynh_config_add detects this file no longer matches
 # what the package last wrote, backs up your version (suffixed .bkp) next
 # to it, and replaces it with a freshly rendered one from the current app
-# settings -- so a hand-edited bridges: list needs to be re-applied
-# from the .bkp file after upgrading. Bridges added through the
-# management socket instead (see below) are stored in
-# managed-bridges.yaml and are not affected by this.
+# settings -- so re-apply your bridges: entries from the .bkp file after
+# upgrading.
 
 hostname: "__TS_HOSTNAME__"
 state_dir: __DATA_DIR__
 ephemeral: false
 control_url: "__CONTROL_URL__"
 socket_mode: "0660"
+# Lets a local reverse proxy (nginx, running as www-data on YunoHost)
+# connect() to bridge sockets. tsbridge itself must belong to this group
+# too to be able to chown a socket to it -- granted via
+# SupplementaryGroups= in the systemd unit.
+socket_group: www-data
 
-# Runtime bridge management API, enabled by default so bridges can be
-# added/removed without editing this file or restarting the service --
-# see the admin doc for example curl commands. Reachable only from the
-# server itself (e.g. over SSH), since this app has no web-exposed
-# domain/path.
-management_socket: /run/__APP__/control.sock
-management_socket_mode: "0600"
-
+# Add bridges here, then `yunohost service restart __APP__` -- editing
+# this list has no hot-reload. `listen:` must be an absolute path: a
+# relative one resolves against this file's own directory
+# (__INSTALL_DIR__), which is read-only to the service, so a relative
+# listen: fails to bind.
+#
+# bridges:
+#   - name: my-service
+#     listen: /run/__APP__/my-service.sock
+#     target: remote-machine:1234
+#     mode: tcp          # optional, defaults to tcp -- raw byte copy.
+#                         # "http" terminates HTTP on the socket and
+#                         # reverse-proxies to target instead.
+#   - name: my-http-service
+#     listen: /run/__APP__/my-http-service.sock
+#     target: other-machine:8080
+#     mode: http
+#     rewrite_host: true # http only, optional: send target's own
+#                         # host:port as the Host header instead of
+#                         # whatever the client sent -- needed for a
+#                         # target that routes/validates by hostname
+#                         # (tailscale serve, notably).
 bridges: []

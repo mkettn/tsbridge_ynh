@@ -13,5 +13,4 @@ Typical use: a reverse proxy or app server on this box connects to
 ACL-scoped node needs tailnet access at all.
 
 This app has no web interface of its own: it is a system service,
-configured through a YAML file and, optionally, a small local JSON API
-for adding or removing bridges without a restart.
+configured entirely through a YAML file (edit + restart, no hot-reload).

@@ -30,18 +30,17 @@ Typical use: a reverse proxy or app server on this box connects to
 ACL-scoped node needs tailnet access at all.
 
 This app has no web interface of its own: it is a system service,
-configured through a YAML file and, optionally, a small local JSON API
-for adding or removing bridges without a restart.
+configured entirely through a YAML file (edit + restart, no hot-reload).
 
 **Shipped version:** 0.0.1~rc1~ynh1
 
 ## Disclaimers / important information
 
 * This app installs no domain, no path, and no nginx configuration:
-  `tsbridge` has nothing to serve over HTTP(S) to end users. All
-  configuration happens through the app's config panel, by hand-editing
-  its config file over SSH, or through its own local (non-web) management
-  API.
+  `tsbridge` has nothing to serve over HTTP(S) to end users. Bridges are
+  added by hand-editing the config file over SSH and restarting the
+  service; only a few scalar settings (node name, control server, auth
+  key) are exposed through the app's config panel.
 * The `bridges:` list -- which sockets map to which tailnet targets -- is
   not part of the install wizard or the config panel; see the app's admin
   documentation for how to manage it after installing.

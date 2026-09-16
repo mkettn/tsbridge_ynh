@@ -14,5 +14,5 @@ directement à `machine-distante:1234` sur le tailnet, de sorte que seul ce
 nœud dédié, restreint par ACL, a besoin d'un accès au tailnet.
 
 Cette app n'a pas d'interface web propre : il s'agit d'un service
-système, configuré via un fichier YAML et, en option, une petite API JSON
-locale permettant d'ajouter ou de retirer des ponts sans redémarrage.
+système, entièrement configuré via un fichier YAML (édition +
+redémarrage, sans rechargement à chaud).

@@ -17,11 +17,8 @@ source /usr/share/yunohost/helpers
 
 ynh_abort_if_errors
 
-#=================================================
-# RETRIEVE ARGUMENTS
-#=================================================
-
-install_dir=$(ynh_app_setting_get --key=install_dir)
+### $install_dir is already available here: packaging v2 loads every app
+### setting into the script environment (same as install/upgrade/etc).
 
 #=================================================
 # SPECIFIC GETTER/SETTER FOR ts_authkey

@@ -31,18 +31,19 @@ directement à `machine-distante:1234` sur le tailnet, de sorte que seul ce
 nœud dédié, restreint par ACL, a besoin d'un accès au tailnet.
 
 Cette app n'a pas d'interface web propre : il s'agit d'un service
-système, configuré via un fichier YAML et, en option, une petite API JSON
-locale permettant d'ajouter ou de retirer des ponts sans redémarrage.
+système, entièrement configuré via un fichier YAML (édition +
+redémarrage, sans rechargement à chaud).
 
 **Version incluse :** 0.0.1~rc1~ynh1
 
 ## Avertissements / informations importantes
 
 * Cette app n'installe ni domaine, ni chemin, ni configuration nginx :
-  `tsbridge` n'a rien à servir en HTTP(S) aux utilisateurs finaux. Toute
-  la configuration se fait via le panneau de configuration de l'app, en
-  éditant son fichier de configuration à la main par SSH, ou via sa
-  propre API de gestion locale (non web).
+  `tsbridge` n'a rien à servir en HTTP(S) aux utilisateurs finaux. Les
+  ponts s'ajoutent en éditant le fichier de configuration à la main par
+  SSH puis en redémarrant le service ; seuls quelques réglages simples
+  (nom du nœud, serveur de contrôle, clé d'authentification) sont
+  exposés via le panneau de configuration de l'app.
 * La liste `bridges:` -- quels sockets correspondent à quelles cibles du
   tailnet -- ne fait pas partie de l'assistant d'installation ni du
   panneau de configuration ; voir la documentation d'administration de

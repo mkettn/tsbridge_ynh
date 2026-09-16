@@ -20,7 +20,11 @@ source /usr/share/yunohost/helpers
 # install-question default can't reference $app -- __APP__ is only
 # hydrated in config-panel binds and doc content, not here), so an empty
 # answer is resolved to the app's own instance name here instead.
-ts_hostname="${ts_hostname:-$app}"
+# $app itself isn't DNS-label-safe under multi_instance (a second
+# instance is "tsbridge__2", and "_" isn't valid in a DNS label -- the
+# tailnet would silently rewrite it), so underscores are swapped for
+# hyphens.
+ts_hostname="${ts_hostname:-${app//_/-}}"
 ynh_app_setting_set --key=ts_hostname --value="$ts_hostname"
 
 #=================================================

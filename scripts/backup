@@ -25,8 +25,8 @@ ynh_backup "$install_dir"
 # BACKUP THE DATA DIR
 #=================================================
 
-# Holds tsnet's persistent node identity and managed-bridges.yaml (any
-# bridge added through the runtime management API).
+# Holds tsnet's persistent node identity (keys, machine state), which
+# matters as long as the node runs with ephemeral: false (the default).
 # NB: $data_dir is not backuped during safety-backup-before-upgrades,
 # and is not removed by "app remove" unless --purge is used -- so even a
 # failed upgrade or a plain removal leaves this node's tailnet identity

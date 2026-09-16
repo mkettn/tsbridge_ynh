@@ -8,9 +8,8 @@
   renseigné une), lu par le `EnvironmentFile=` de l'unité systemd.
 - Une unité systemd `__APP__.service`, exécutée sous l'utilisateur
   système dédié `__APP__`, avec `Restart=on-failure`.
-- Le dossier de données persistantes de l'app (identité du nœud tsnet, et
-  `managed-bridges.yaml` en cas d'utilisation de l'API de gestion
-  ci-dessous) -- **non** supprimé lors d'une simple désinstallation,
+- Le dossier de données persistantes de l'app, contenant l'identité du
+  nœud tsnet -- **non** supprimé lors d'une simple désinstallation,
   uniquement avec `--purge`.
 
 Il n'y a ni domaine, ni configuration nginx, ni intégration SSO/LDAP :
@@ -19,47 +18,37 @@ de domaine/chemin.
 
 ## Ajouter, retirer et modifier des ponts (bridges)
 
-La liste `bridges:` de `config.yaml` n'a pas de rechargement à chaud --
-la modifier à la main nécessite `yunohost service restart __APP__` pour
-prendre effet. Pour modifier les ponts sans redémarrage, l'API de gestion
-en temps réel est activée par défaut sur `/run/__APP__/control.sock`
-(accessible uniquement localement, par ex. via SSH, puisqu'il n'y a pas
-de domaine pour l'exposer) :
+La liste `bridges:` de `config.yaml` n'a pas de rechargement à chaud :
+ajoutez, retirez ou modifiez un pont en éditant
+`__INSTALL_DIR__/config.yaml`, puis
 
 ```sh
-# Ajouter un pont.
-sudo curl --unix-socket /run/__APP__/control.sock \
-  -X POST http://unix/bridges \
-  -H 'content-type: application/json' \
-  -d '{"name":"svc","listen":"/run/__APP__/svc.sock","target":"machine-distante:1234"}'
-
-# Lister tous les ponts connus de tsbridge.
-sudo curl --unix-socket /run/__APP__/control.sock http://unix/bridges
-
-# Le désactiver sans l'oublier, puis le réactiver.
-sudo curl --unix-socket /run/__APP__/control.sock -X POST http://unix/bridges/svc/disable
-sudo curl --unix-socket /run/__APP__/control.sock -X POST http://unix/bridges/svc/enable
-
-# Le supprimer entièrement.
-sudo curl --unix-socket /run/__APP__/control.sock -X DELETE http://unix/bridges/svc
-
-# Vérifier la connexion au tailnet elle-même (pas un pont en particulier).
-sudo curl --unix-socket /run/__APP__/control.sock http://unix/status
+yunohost service restart __APP__
 ```
 
-Un pont ajouté ainsi est persisté dans `managed-bridges.yaml`, dans le
-dossier de données de l'app, et survit aux redémarrages ; `DELETE`/
-`disable` mettent aussi à jour ce fichier. Un pont défini directement
-dans `config.yaml` revient en revanche à chaque redémarrage sauf à
-modifier aussi `config.yaml` -- `disable`/`DELETE` via l'API ne
-l'affectent alors que jusqu'au prochain redémarrage. `GET /bridges`
-indique la `source` de chaque pont (`"config"` ou `"managed"`) pour les
-distinguer. Voir le README du projet amont (lien dans la documentation
-d'administration de cette app) pour la référence complète de l'API.
+Chaque entrée nécessite `name`, `listen` (un chemin de socket Unix
+absolu -- voir l'exemple déjà en commentaire dans `config.yaml`) et
+`target` (`hôte:port` accessible sur le tailnet). Voir le README du
+projet amont (lien dans la documentation d'administration de cette app)
+pour la référence complète des champs, notamment `mode: http` pour
+terminer le HTTP et faire du reverse-proxy plutôt qu'une simple copie
+d'octets.
 
-**Une liste `bridges:` modifiée à la main dans `config.yaml` ne survit
-pas à une mise à jour de l'app** -- voir le message affiché après la mise
-à jour. Les ponts ajoutés via l'API de gestion ne sont pas concernés.
+**Une liste `bridges:` modifiée à la main ne survit pas à une mise à
+jour de l'app** -- voir le message affiché après la mise à jour.
+
+## Joindre un socket de pont depuis un reverse-proxy
+
+Les sockets de pont sont créées avec le groupe `www-data` par défaut
+(`socket_group: www-data` dans `config.yaml`, avec
+`SupplementaryGroups=www-data` sur l'unité systemd pour que `__APP__`
+puisse appliquer ce groupe), afin que nginx -- ou tout autre service
+local tournant en tant que `www-data` -- puisse s'y connecter
+directement, par exemple comme cible `proxy_pass
+http://unix:/run/__APP__/mon-service.sock:;` dans un extrait nginx écrit
+à la main. Il n'y a pas de configuration nginx gérée par YunoHost pour
+cette app ; relier un socket de pont à un domaine reste entièrement à
+votre charge.
 
 ## Enregistrer le nœud auprès du tailnet
 
@@ -94,7 +83,7 @@ __APP__ > Panneau de configuration) expose :
 
 Toute modification redémarre automatiquement le service `__APP__`. La
 liste `bridges:` elle-même n'est volontairement pas exposée ici -- voir
-la section précédente.
+les sections précédentes.
 
 ## Journaux
 

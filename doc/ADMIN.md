@@ -7,9 +7,8 @@
   read by the systemd unit's `EnvironmentFile=`.
 - A `__APP__.service` systemd unit, running as the dedicated `__APP__`
   system user, with `Restart=on-failure`.
-- The app's persistent data directory (tsnet's node identity, and
-  `managed-bridges.yaml` if you use the management API below) -- this is
-  **not** removed on a plain app removal, only with `--purge`.
+- The app's persistent data directory, holding tsnet's node identity --
+  this is **not** removed on a plain app removal, only with `--purge`.
 
 There is no domain, no nginx configuration, and no SSO/LDAP integration:
 `tsbridge` has no web interface of its own, so this app doesn't ask for
@@ -17,46 +16,33 @@ or use a domain/path.
 
 ## Adding, removing and changing bridges
 
-`config.yaml`'s `bridges:` list has no hot-reload -- editing it by hand
-requires `yunohost service restart __APP__` to take effect. To change
-bridges without a restart, the runtime management API is enabled by
-default on `/run/__APP__/control.sock` (only reachable locally, e.g. over
-SSH, since there's no domain to expose it through):
+`config.yaml`'s `bridges:` list has no hot-reload: add, remove, or
+change a bridge by editing `__INSTALL_DIR__/config.yaml`, then
 
 ```sh
-# Add a bridge.
-sudo curl --unix-socket /run/__APP__/control.sock \
-  -X POST http://unix/bridges \
-  -H 'content-type: application/json' \
-  -d '{"name":"svc","listen":"/run/__APP__/svc.sock","target":"remote-machine:1234"}'
-
-# List every bridge tsbridge currently knows about.
-sudo curl --unix-socket /run/__APP__/control.sock http://unix/bridges
-
-# Take one offline without forgetting it, then bring it back.
-sudo curl --unix-socket /run/__APP__/control.sock -X POST http://unix/bridges/svc/disable
-sudo curl --unix-socket /run/__APP__/control.sock -X POST http://unix/bridges/svc/enable
-
-# Remove it entirely.
-sudo curl --unix-socket /run/__APP__/control.sock -X DELETE http://unix/bridges/svc
-
-# Check the tailnet connection itself (not any one bridge).
-sudo curl --unix-socket /run/__APP__/control.sock http://unix/status
+yunohost service restart __APP__
 ```
 
-A bridge added this way is persisted to `managed-bridges.yaml` in the
-app's data directory and survives restarts; `DELETE`/`disable` update
-that file too, so the change sticks. A bridge defined directly in
-`config.yaml` instead comes back on every restart unless you also edit
-`config.yaml` -- `disable`/`DELETE` through the API only affect it until
-the next restart. `GET /bridges` reports each bridge's `source`
-(`"config"` or `"managed"`) so you can tell which is which. See
-upstream's own README (linked from this app's admin doc URL) for the
-full API reference and JSON field meanings.
+Each entry needs `name`, `listen` (an absolute Unix socket path -- see
+the commented example already in `config.yaml`) and `target`
+(`host:port` reachable over the tailnet). See upstream's own README
+(linked from this app's admin doc URL) for the full field reference,
+including `mode: http` for terminating HTTP and reverse-proxying instead
+of a raw byte copy.
 
-**A hand-edited `bridges:` list in `config.yaml` does not survive an app
-upgrade** -- see `doc/POST_UPGRADE.md` / the message shown after
-upgrading. Bridges added through the management API are unaffected.
+**A hand-edited `bridges:` list does not survive an app upgrade** -- see
+`doc/POST_UPGRADE.md` / the message shown after upgrading.
+
+## Reaching a bridge socket from a reverse proxy
+
+Bridge sockets are created group-owned `www-data` by default
+(`socket_group: www-data` in `config.yaml`, with `SupplementaryGroups=
+www-data` on the systemd unit so `__APP__` can set that group), so
+nginx -- or any other local service running as `www-data` -- can
+`connect()` to them directly, e.g. as a `proxy_pass
+http://unix:/run/__APP__/my-service.sock:;` target in a hand-written
+nginx snippet. There is no YunoHost-managed nginx config for this app;
+wiring a bridge socket up to a domain is left entirely to you.
 
 ## Registering the node with the tailnet
 
@@ -87,7 +73,7 @@ The webadmin's app config panel (Apps > __APP__ > Config panel) exposes:
 
 Any change restarts the `__APP__` service automatically. The `bridges:`
 list itself is intentionally not exposed here -- see the previous
-section.
+sections.
 
 ## Logs
 
