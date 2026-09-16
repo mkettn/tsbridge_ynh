@@ -13,6 +13,17 @@ source /usr/share/yunohost/helpers
 ### script, so $install_dir and $data_dir are already available.
 
 #=================================================
+# INITIALIZE SETTINGS
+#=================================================
+
+# ts_hostname is optional with no default in manifest.toml (an
+# install-question default can't reference $app -- __APP__ is only
+# hydrated in config-panel binds and doc content, not here), so an empty
+# answer is resolved to the app's own instance name here instead.
+ts_hostname="${ts_hostname:-$app}"
+ynh_app_setting_set --key=ts_hostname --value="$ts_hostname"
+
+#=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
 #=================================================
 ynh_script_progression "Setting up source files..."

@@ -34,6 +34,10 @@ services = ["__APP__"]
         type = "string"
         optional = true
         redact = true
-        help.en = "Only used to (re-)register this node. Changing this does not affect an already-registered node; see the admin doc."
-        help.fr = "Utilisée uniquement pour (ré-)enregistrer ce nœud. La modifier n'affecte pas un nœud déjà enregistré ; voir la documentation d'administration."
-        bind = "TS_AUTHKEY:__INSTALL_DIR__/tsbridge.env"
+        help.en = "Only used to (re-)register this node. Changing this does not affect an already-registered node; see the admin doc. Stored only in tsbridge.env, never in this app's settings."
+        help.fr = "Utilisée uniquement pour (ré-)enregistrer ce nœud. La modifier n'affecte pas un nœud déjà enregistré ; voir la documentation d'administration. Stockée uniquement dans tsbridge.env, jamais dans les réglages de cette app."
+        # bind = "null" (rather than a plain "KEY:FILE" bind) so this
+        # never gets mirrored into settings.yml in cleartext -- a plain
+        # bind writes *both* the file and the setting. get__/set__
+        # ts_authkey in scripts/config read/write tsbridge.env only.
+        bind = "null"

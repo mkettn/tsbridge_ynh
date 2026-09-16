@@ -1,9 +1,13 @@
 #!/bin/bash
 
-# Every question in config_panel.toml binds directly to a KEY: VALUE line
-# in config.yaml or tsbridge.env (bind = "key:__INSTALL_DIR__/..."), so
-# the core handles reading/writing them on its own -- no custom
-# getter/setter/validator needed here.
+# hostname and control_url bind directly to a KEY: VALUE line in
+# config.yaml (bind = "key:__INSTALL_DIR__/config.yaml"), so the core
+# handles reading/writing them on its own.
+#
+# ts_authkey uses bind = "null" instead of a plain file bind: a plain
+# bind mirrors the value into settings.yml as well as the file, which
+# would put the auth key in cleartext in the app's regular settings.
+# get__/set__ below read/write tsbridge.env only.
 
 #=================================================
 # IMPORT GENERIC HELPERS
@@ -12,6 +16,24 @@
 source /usr/share/yunohost/helpers
 
 ynh_abort_if_errors
+
+#=================================================
+# RETRIEVE ARGUMENTS
+#=================================================
+
+install_dir=$(ynh_app_setting_get --key=install_dir)
+
+#=================================================
+# SPECIFIC GETTER/SETTER FOR ts_authkey
+#=================================================
+
+get__ts_authkey() {
+    ynh_read_var_in_file --file="$install_dir/tsbridge.env" --key="TS_AUTHKEY"
+}
+
+set__ts_authkey() {
+    ynh_write_var_in_file --file="$install_dir/tsbridge.env" --key="TS_AUTHKEY" --value="$ts_authkey"
+}
 
 #=================================================
 ynh_app_config_run "$1"

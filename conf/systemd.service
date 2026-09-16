@@ -18,9 +18,12 @@ StandardOutput=journal
 StandardError=journal
 
 # Unix sockets (bridge sockets + the runtime management socket) are
-# created here at /run/__APP__, recreated on every start.
+# created here at /run/__APP__, recreated on every start. Mode 0755 so
+# client processes outside the __APP__ group can traverse into the
+# directory at all -- access control happens at each socket itself
+# (its own group + socket_mode), not at the directory.
 RuntimeDirectory=__APP__
-RuntimeDirectoryMode=0750
+RuntimeDirectoryMode=0755
 
 ### Depending on specificities of your service/app, you may need to tweak these
 ### .. but this should be a good baseline
@@ -30,8 +33,13 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes
 ProtectSystem=strict
-ProtectHome=yes
-ReadWritePaths=__INSTALL_DIR__ __DATA_DIR__
+# __DATA_DIR__ (tsnet's persistent state) lives under /home/yunohost.app,
+# which plain ProtectHome=yes would make inaccessible even to
+# ReadWritePaths/BindPaths (it's hidden by an empty mount, not merely
+# marked read-only) -- ProtectHome=tmpfs + BindPaths= is the combination
+# that actually punches a hole back through for it.
+ProtectHome=tmpfs
+BindPaths=__DATA_DIR__
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 RestrictNamespaces=yes
 RestrictRealtime=yes
