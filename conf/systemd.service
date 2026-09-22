@@ -56,7 +56,18 @@ ProtectKernelModules=yes
 ProtectKernelTunables=yes
 LockPersonality=yes
 SystemCallArchitectures=native
-SystemCallFilter=~@clock @debug @module @mount @obsolete @reboot @setuid @swap @cpu-emulation @privileged
+# @system-service is systemd's own curated allow-list for exactly this
+# class of long-running network daemon, rather than a hand-picked
+# deny-list of groups: tsnet's userspace WireGuard + rtnetlink route
+# monitoring + gVisor netstack call things a hand-picked deny-list can
+# easily miss (broad groups like @privileged in particular subsume
+# several others), and a miss here is a silent SIGSYS kill-and-restart
+# loop, not a clean error -- see doc/ADMIN.md's troubleshooting entry.
+SystemCallFilter=@system-service
+# A future SystemCallFilter= mismatch fails the syscall with EPERM
+# (visible in tsbridge's own log as a Go error) instead of killing the
+# process outright with SIGSYS.
+SystemCallErrorNumber=EPERM
 
 # Denying access to capabilities that should not be relevant for tsbridge
 # Doc: https://man7.org/linux/man-pages/man7/capabilities.7.html

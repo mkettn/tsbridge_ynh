@@ -116,3 +116,28 @@ key) to only the hosts/ports it actually bridges to:
 
 Adjust `dst` to match every `target:` this instance bridges to, and
 nothing more.
+
+## Troubleshooting
+
+**Service keeps restarting, `journalctl -u __APP__` just shows "Main
+process exited, code=killed, status=31/SYS" / "Failed with result
+'signal'"**: signal 31 is `SIGSYS` -- the kernel's seccomp filter,
+installed by the unit's `SystemCallFilter=`, killed the process for
+calling a syscall outside `@system-service` (systemd's own curated
+allow-list for long-running network daemons). This should not happen
+with the shipped unit, but if it does after a manual edit or a future
+tsbridge upgrade that changes its syscall usage:
+
+- `SystemCallErrorNumber=EPERM` on the unit means a *future* mismatch
+  fails the syscall with an error tsbridge can log, instead of a silent
+  kill -- check `journalctl -u __APP__` first for a Go-level error
+  before assuming it's still this.
+- To find exactly which syscall was denied, check kernel/audit messages
+  around the same timestamp (`journalctl -k` or `dmesg`) for a `syscall=`
+  number, or temporarily comment out `SystemCallFilter=`/
+  `SystemCallErrorNumber=` in the unit, `systemctl daemon-reload &&
+  systemctl restart __APP__`, and confirm the service now stays up --
+  that isolates the cause to the filter before you go syscall-hunting.
+- [Report an issue](https://github.com/mkettn/tsbridge_ynh/issues) with
+  the syscall number/name if you track one down; it very likely needs
+  adding back for everyone, not just worked around locally.
