@@ -40,6 +40,10 @@ ynh_backup "$data_dir"
 # Backup the systemd service unit
 ynh_backup "/etc/systemd/system/$app.service"
 
+# Backup this app's nginx config (the admin web UI's reverse-proxy/static
+# location if webui is on, or the "disabled" placeholder if not).
+ynh_backup "/etc/nginx/conf.d/$domain.d/$app.conf"
+
 #=================================================
 # END OF SCRIPT
 #=================================================

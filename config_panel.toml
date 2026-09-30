@@ -6,6 +6,15 @@ version = "1.0"
 name.en = "tsbridge configuration"
 services = ["__APP__"]
 
+    [main.admin_webui]
+    name.en = "Admin web UI"
+    help.en = "The domain/path chosen at install time is reserved either way; this only controls whether anything is actually served there."
+
+        [main.admin_webui.webui]
+        ask.en = "Enable the read-only admin web UI"
+        type = "boolean"
+        help.en = "Serves a status + bridge-list page (and its read-only JSON API) at this app's URL, restricted to YunoHost admins. Off by default -- see the admin doc for what this does and does not expose."
+
     [main.tailnet]
     name.en = "Tailnet connection"
     help.en = "The bridges: list itself (which sockets map to which tailnet targets) is not editable here -- see the admin doc for how to manage it."

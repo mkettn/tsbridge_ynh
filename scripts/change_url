@@ -1,0 +1,34 @@
+#!/bin/bash
+
+## This script only runs if the domain/path actually changed. New values
+## are in $domain/$path ($new_domain/$new_path also work, same values);
+## old ones are in $old_domain/$old_path.
+##
+## tsbridge itself has no notion of domain/path -- only nginx does (the
+## admin web UI, or its "disabled" placeholder either way) -- so there's
+## nothing here to stop/restart on tsbridge's side, just nginx to update.
+
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# MOVE THE NGINX CONFIG TO THE NEW DOMAIN/PATH
+#=================================================
+ynh_script_progression "Updating NGINX web server configuration..."
+
+ynh_safe_rm "/etc/nginx/conf.d/$old_domain.d/$app.conf"
+
+# Re-renders using the now-current $domain/$path (tsbridge_apply_webui
+# also re-renders config.yaml, which is a harmless no-op here since
+# nothing in it depends on domain/path either).
+tsbridge_apply_webui
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Change of URL completed for $app"

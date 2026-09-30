@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>tsbridge</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #e1e4e8;
+    --text: #1f2328;
+    --muted: #59636e;
+    --accent: #2f6feb;
+    --ok: #1a7f37;
+    --bad: #cf222e;
+    --warn: #9a6700;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #9198a1;
+      --accent: #58a6ff;
+      --ok: #3fb950;
+      --bad: #f85149;
+      --warn: #d29922;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 64px;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 900px; margin: 0 auto; }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 24px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 14px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; word-break: break-word; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .dot.ok { background: var(--ok); }
+  .dot.bad { background: var(--bad); }
+  .dot.warn { background: var(--warn); }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .error-text { color: var(--bad); }
+  .empty, .loading, .fetch-error { color: var(--muted); font-style: italic; }
+  .fetch-error { color: var(--bad); font-style: normal; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>tsbridge</h1>
+  <p class="sub">Read-only view. Bridges are managed by editing <code>config.yaml</code> over SSH (<code>yunohost app shell tsbridge</code>) -- see this app's admin documentation.</p>
+
+  <section class="card">
+    <h2>Tailnet connection</h2>
+    <div id="status" class="loading">Loading…</div>
+  </section>
+
+  <section class="card">
+    <h2>Bridges</h2>
+    <div id="bridges" class="loading">Loading…</div>
+  </section>
+
+  <footer>Auto-refreshes every 5s &middot; <a href="api/status">status</a> &middot; <a href="api/bridges">bridges</a> (raw JSON)</footer>
+</main>
+<script>
+"use strict";
+
+function el(tag, attrs, children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "text") node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const child of children || []) node.appendChild(child);
+  return node;
+}
+
+async function fetchJSON(path) {
+  const res = await fetch(path, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  return res.json();
+}
+
+function renderStatus(container, status) {
+  container.className = "";
+  container.innerHTML = "";
+  const stateOk = status.backend_state === "Running";
+  const dl = el("dl", { class: "kv" }, [
+    el("dt", { text: "State" }),
+    el("dd", {}, [
+      el("span", { class: "dot " + (stateOk ? "ok" : "bad") }),
+      document.createTextNode(status.backend_state || "unknown"),
+    ]),
+    el("dt", { text: "Tailnet" }),
+    el("dd", { text: status.tailnet || "–" }),
+    el("dt", { text: "Tailscale IPs" }),
+    el("dd", { text: (status.tailscale_ips || []).join(", ") || "–" }),
+    el("dt", { text: "Health" }),
+    el("dd", { text: (status.health || []).join("; ") || "no known issues" }),
+  ]);
+  container.appendChild(dl);
+}
+
+function bridgeRow(b) {
+  let dotClass = "bad";
+  let label = "stopped";
+  if (b.enabled && b.running) { dotClass = "ok"; label = "running"; }
+  else if (!b.enabled) { dotClass = "warn"; label = "disabled"; }
+
+  const modeBadge = el("span", { class: "badge", text: b.mode || "tcp" });
+  const sourceBadge = el("span", { class: "badge", text: b.source || "config" });
+
+  const statusCell = el("td", {}, [
+    el("span", { class: "dot " + dotClass }),
+    document.createTextNode(label),
+  ]);
+  if (b.error) {
+    statusCell.appendChild(el("div", { class: "error-text", text: b.error }));
+  }
+  if (b.dial_failures) {
+    statusCell.appendChild(el("div", { class: "error-text",
+      text: `${b.dial_failures} dial failure(s)` + (b.last_dial_error ? `: ${b.last_dial_error}` : "") }));
+  }
+
+  return el("tr", {}, [
+    el("td", { text: b.name }),
+    el("td", {}, [el("code", { text: b.listen })]),
+    el("td", {}, [el("code", { text: b.target })]),
+    el("td", {}, [modeBadge]),
+    el("td", {}, [sourceBadge]),
+    statusCell,
+  ]);
+}
+
+function renderBridges(container, bridges) {
+  container.className = "";
+  container.innerHTML = "";
+  if (!bridges.length) {
+    container.appendChild(el("p", { class: "empty", text: "No bridges configured yet." }));
+    return;
+  }
+  const table = el("table", {}, [
+    el("thead", {}, [
+      el("tr", {}, [
+        el("th", { text: "Name" }),
+        el("th", { text: "Listen" }),
+        el("th", { text: "Target" }),
+        el("th", { text: "Mode" }),
+        el("th", { text: "Source" }),
+        el("th", { text: "Status" }),
+      ]),
+    ]),
+    el("tbody", {}, bridges.map(bridgeRow)),
+  ]);
+  container.appendChild(table);
+}
+
+async function refresh() {
+  const statusEl = document.getElementById("status");
+  const bridgesEl = document.getElementById("bridges");
+  try {
+    const [status, bridges] = await Promise.all([
+      fetchJSON("api/status"),
+      fetchJSON("api/bridges"),
+    ]);
+    renderStatus(statusEl, status);
+    renderBridges(bridgesEl, bridges);
+  } catch (err) {
+    const msg = "Could not reach tsbridge's management socket: " + err.message;
+    for (const el2 of [statusEl, bridgesEl]) {
+      el2.className = "";
+      el2.innerHTML = "";
+      el2.appendChild(el("p", { class: "fetch-error", text: msg }));
+    }
+  }
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

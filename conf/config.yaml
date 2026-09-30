@@ -1,13 +1,14 @@
 # tsbridge config, managed by the tsbridge YunoHost package.
 #
-# hostname and control_url (the auth key is kept separately in
+# hostname, control_url and webui (the auth key is kept separately in
 # tsbridge.env, never here) can be changed from the webadmin's app
-# config panel, which edits this file's matching KEY: VALUE line in
-# place and restarts the service. Everything else -- including the
-# bridges: list itself -- is not covered by the config panel: add,
-# remove, or change a bridge by editing bridges: below, then
-# `yunohost service restart __APP__` (there is no hot-reload). See the
-# app's admin doc for details.
+# config panel. hostname/control_url edit this file's matching
+# KEY: VALUE line in place and restart the service; webui additionally
+# regenerates the management_socket_* lines below and this app's nginx
+# config. Everything else -- including the bridges: list itself -- is
+# not covered by the config panel: add, remove, or change a bridge by
+# editing bridges: below, then `yunohost service restart __APP__`
+# (there is no hot-reload). See the app's admin doc for details.
 #
 # A hand-edited bridges: list survives a `yunohost service restart`, but
 # NOT an app upgrade: ynh_config_add detects this file no longer matches
@@ -26,6 +27,16 @@ socket_mode: "0660"
 # too to be able to chown a socket to it -- granted via
 # SupplementaryGroups= in the systemd unit.
 socket_group: www-data
+
+# Powers the read-only admin web UI's /api/ proxy (see the webui install
+# question / config panel). All three are empty strings -- equivalent to
+# fully unset, tsbridge's own config.go treats "" the same as absent --
+# whenever webui is off, which also disables the management socket
+# entirely: nothing here exposes bridge management over HTTP unless you
+# explicitly turned webui on.
+management_socket: "__MANAGEMENT_SOCKET__"
+management_socket_mode: "__MANAGEMENT_SOCKET_MODE__"
+management_socket_group: "__MANAGEMENT_SOCKET_GROUP__"
 
 # Add bridges here, then `yunohost service restart __APP__` -- editing
 # this list has no hot-reload. `listen:` must be an absolute path: a

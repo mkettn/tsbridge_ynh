@@ -41,9 +41,10 @@ chmod 750 "$install_dir/tsbridge"
 #=================================================
 ynh_script_progression "Adding $app's configuration files..."
 
-ynh_config_add --template="config.yaml" --destination="$install_dir/config.yaml"
-chmod 640 "$install_dir/config.yaml"
-chown "$app:$app" "$install_dir/config.yaml"
+# Renders config.yaml and this app's nginx config together, since
+# whether the management socket exists (config.yaml) and what nginx
+# serves at $domain$path both follow from the same $webui setting.
+tsbridge_apply_webui
 
 # ts_authkey (type = password) is *not* auto-saved as an app setting, so
 # it's only available here, at install time. It's written straight into

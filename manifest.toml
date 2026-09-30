@@ -22,12 +22,26 @@ helpers_version = "2.1"
 architectures = ["amd64", "arm64"]
 multi_instance = false
 ldap = "not_relevant"
-sso = "not_relevant"
+sso = true
 disk = "50M"
 ram.build = "10M"
 ram.runtime = "20M"
 
 [install]
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/tsbridge"
+    help.en = "Only used to reach the admin web UI (see the webui question below) -- tsbridge's own traffic never goes through this domain/path."
+
+    [install.webui]
+    ask.en = "Enable the admin web UI for viewing bridges?"
+    type = "boolean"
+    default = false
+    help.en = "A read-only page (status + bridge list) for YunoHost admins, served at the domain/path above. Off by default: even read-only, it's a new admin-facing HTTP surface on top of the management socket, which can otherwise only be reached locally over SSH. Can be switched on later from this app's config panel -- the domain/path above is reserved either way so turning it on later doesn't require picking one retroactively."
+
     [install.ts_hostname]
     ask.en = "Node name on the tailnet"
     type = "string"
@@ -70,3 +84,15 @@ ram.runtime = "20M"
     [resources.install_dir]
 
     [resources.data_dir]
+
+    [resources.permissions]
+    main.url = "/"
+    main.allowed = "admins"
+    main.show_tile = true
+    # Never let this permission loosen to "all_users" or "visitors" by a
+    # later `yunohost user permission update`: even in its current
+    # read-only form it fronts the management socket, and a future,
+    # fuller version of this UI will be able to create bridges to
+    # arbitrary tailnet targets -- admin-only is not just today's default,
+    # it's the only sane state for this permission ever.
+    main.protected = true

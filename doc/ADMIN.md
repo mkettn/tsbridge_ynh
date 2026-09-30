@@ -9,10 +9,12 @@
   system user, with `Restart=on-failure`.
 - The app's persistent data directory, holding tsnet's node identity --
   this is **not** removed on a plain app removal, only with `--purge`.
-
-There is no domain, no nginx configuration, and no SSO/LDAP integration:
-`tsbridge` has no web interface of its own, so this app doesn't ask for
-or use a domain/path.
+- A domain/path (asked at install, like any webapp) and a YunoHost
+  permission restricted to admins (`protected = true`, so it can never
+  be loosened to other users/groups later). `tsbridge` itself has no web
+  interface -- this domain/path exists only for the optional admin web
+  UI below, and serves a short "disabled" message at that URL until you
+  turn it on.
 
 ## Adding, removing and changing bridges
 
@@ -38,7 +40,47 @@ of a raw byte copy.
 **A hand-edited `bridges:` list does not survive an app upgrade** -- see
 `doc/POST_UPGRADE.md` / the message shown after upgrading.
 
+## Admin web UI
+
+Off by default. When enabled (install-time question, or the config
+panel's "Admin web UI" section), this app's domain/path serves a
+read-only dashboard -- tailnet connection status, and the `bridges:`
+list with each one's mode, source, and running/stopped/disabled state
+-- restricted to YunoHost admins via a `protected = true` permission
+(see "What this package installs" above). It cannot add, remove,
+enable, or disable a bridge; that's still config.yaml + a restart, or
+the config panel for the handful of fields it covers. Turning it on
+later doesn't require picking a domain/path retroactively -- one is
+always reserved at install, whether or not you use it.
+
+What actually happens when you turn it on:
+
+- `config.yaml` gets `management_socket: /run/__APP__/control.sock`
+  (and matching `_mode`/`_group`), so `tsbridge` starts its own JSON
+  management API on that socket -- see upstream's README for the full
+  route list (`GET /status`, `GET /bridges`, plus write routes this UI
+  doesn't use).
+- This app's nginx config proxies `<domain><path>/api/` to that socket,
+  but **only forwards `GET` requests** (`limit_except GET { deny all;
+  }`) -- a second, nginx-level restriction on top of the UI itself only
+  ever calling the read endpoints. This does *not* make the socket
+  itself read-only: anyone with local access to it (e.g. over SSH) can
+  still `curl -X POST`/`DELETE` it directly, same as always -- see
+  upstream's README for that API's full write surface.
+- `<domain><path>/` serves the dashboard's static files from
+  `__INSTALL_DIR__/www/`.
+
+Turning it off removes the nginx proxy/static routes (back to the
+"disabled" placeholder message), deletes `__INSTALL_DIR__/www/`, and
+clears `management_socket` from `config.yaml` -- `tsbridge` stops
+running the management API at all, not just stops exposing it over
+HTTP.
+
 ## Reaching a bridge socket from a reverse proxy
+
+This is separate from the admin web UI above -- it's about exposing
+one of *your own* bridges (the actual services you're proxying to the
+tailnet), not tsbridge's own management API.
 
 Bridge sockets are created group-owned `www-data` by default
 (`socket_group: www-data` in `config.yaml`, with `SupplementaryGroups=
@@ -46,8 +88,9 @@ www-data` on the systemd unit so `__APP__` can set that group), so
 nginx -- or any other local service running as `www-data` -- can
 `connect()` to them directly, e.g. as a `proxy_pass
 http://unix:/run/__APP__/my-service.sock:;` target in a hand-written
-nginx snippet. There is no YunoHost-managed nginx config for this app;
-wiring a bridge socket up to a domain is left entirely to you.
+nginx snippet. This app's own nginx config only ever covers its admin
+web UI path above; wiring one of your bridge sockets up to a domain
+(the same one or a different one) is left entirely to you.
 
 ## Registering the node with the tailnet
 
@@ -69,6 +112,8 @@ identity persists in the app's data directory across restarts.
 
 The webadmin's app config panel (Apps > __APP__ > Config panel) exposes:
 
+- **Enable the read-only admin web UI** -- see "Admin web UI" above for
+  exactly what flipping this does
 - **Node name on the tailnet** (`hostname:` in `config.yaml`)
 - **Control server URL** (`control_url:` in `config.yaml`) -- empty uses
   Tailscale's own; set it to switch to a self-hosted Headscale instance

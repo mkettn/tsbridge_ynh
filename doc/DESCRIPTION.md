@@ -12,5 +12,7 @@ Typical use: a reverse proxy or app server on this box connects to
 `remote-machine:1234` on the tailnet, so only this one dedicated,
 ACL-scoped node needs tailnet access at all.
 
-This app has no web interface of its own: it is a system service,
-configured entirely through a YAML file (edit + restart, no hot-reload).
+`tsbridge` itself has no web interface: it's a system service, configured
+through a YAML file (edit + restart, no hot-reload). This app does add
+an optional, off-by-default, admin-only read-only dashboard (tailnet
+status and bridge list) for those who want one.

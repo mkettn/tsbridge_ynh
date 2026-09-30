@@ -44,9 +44,13 @@ ynh_script_progression "Updating $app's configuration files..."
 ### from the current app settings. tsbridge.env is intentionally *not*
 ### regenerated here -- ts_authkey isn't a persisted setting, so there's
 ### nothing to render it from; the file --kept above is left as-is.
-ynh_config_add --template="config.yaml" --destination="$install_dir/config.yaml"
-chmod 640 "$install_dir/config.yaml"
-chown "$app:$app" "$install_dir/config.yaml"
+#
+# Also re-renders this app's nginx config and the admin UI's static
+# files from the current (unchanged, unless a previous config-panel
+# edit changed it) $webui setting -- same logic as install, so a
+# package upgrade that touches sources/www/ or the nginx templates
+# actually reaches an existing install too.
+tsbridge_apply_webui
 
 chmod 600 "$install_dir/tsbridge.env"
 chown "$app:$app" "$install_dir/tsbridge.env"
