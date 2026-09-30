@@ -10,17 +10,26 @@
 # Only set__ts_authkey is defined below (no get__ts_authkey), so the
 # key is write-only -- it can be replaced but never read back, through
 # this panel or `yunohost app config get`.
+#
+# webui uses the default bind (plain settings storage, read back
+# normally) but still needs a custom setter: toggling it doesn't just
+# change one KEY: VALUE line, it re-renders config.yaml's
+# management_socket_* fields, copies or removes the static UI files, and
+# regenerates this app's nginx config -- side effects a default
+# bind="settings" setter has no way to know about.
 
 #=================================================
 # IMPORT GENERIC HELPERS
 #=================================================
 
+source _common.sh
 source /usr/share/yunohost/helpers
 
 ynh_abort_if_errors
 
-### $install_dir is already available here: packaging v2 loads every app
-### setting into the script environment (same as install/upgrade/etc).
+### $install_dir/$domain/$app are already available here: packaging v2
+### loads every app setting into the script environment (same as
+### install/upgrade/etc).
 
 #=================================================
 # SPECIFIC SETTER FOR ts_authkey (write-only, see note above)
@@ -28,6 +37,15 @@ ynh_abort_if_errors
 
 set__ts_authkey() {
     ynh_write_var_in_file --file="$install_dir/tsbridge.env" --key="TS_AUTHKEY" --value="$ts_authkey"
+}
+
+#=================================================
+# SPECIFIC SETTER FOR webui (side effects, see note above)
+#=================================================
+
+set__webui() {
+    tsbridge_apply_webui
+    ynh_app_setting_set --key=webui --value="$webui"
 }
 
 #=================================================

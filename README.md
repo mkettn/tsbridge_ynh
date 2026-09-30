@@ -27,19 +27,26 @@ Typical use: a reverse proxy or app server on this box connects to
 `remote-machine:1234` on the tailnet, so only this one dedicated,
 ACL-scoped node needs tailnet access at all.
 
-This app has no web interface of its own: it is a system service,
-configured entirely through a YAML file (edit + restart, no hot-reload).
+`tsbridge` itself has no web interface: it's a system service, configured
+through a YAML file (edit + restart, no hot-reload). This app does add
+an optional, off-by-default, admin-only read-only dashboard (tailnet
+status and bridge list) for those who want one.
 
 **Shipped version:** 0.0.1~rc1~ynh1
 
 ## Disclaimers / important information
 
-* This app installs no domain, no path, and no nginx configuration:
-  `tsbridge` has nothing to serve over HTTP(S) to end users. Bridges are
-  added by editing the config file from the app's own shell
-  (`yunohost app shell tsbridge`) and restarting the service; only a
-  few scalar settings (node name, control server, auth key) are
-  exposed through the app's config panel.
+* This app asks for a domain/path at install like any webapp, but
+  `tsbridge` itself has nothing to serve over HTTP(S) there -- that
+  domain/path is reserved for an **optional, off-by-default, read-only
+  admin dashboard** (tailnet status + bridge list), restricted to
+  YunoHost admins. Leave it off and the domain/path just answers with a
+  short "disabled" message. Bridges are always added/removed by editing
+  the config file from the app's own shell (`yunohost app shell
+  tsbridge`) and restarting the service -- the dashboard can't do that
+  (yet); only a few scalar settings (node name, control server, auth
+  key, and the dashboard toggle itself) are exposed through the app's
+  config panel.
 * The `bridges:` list -- which sockets map to which tailnet targets -- is
   not part of the install wizard or the config panel; see the app's admin
   documentation for how to manage it after installing.

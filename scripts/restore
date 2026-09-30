@@ -20,6 +20,17 @@ chmod 750 "$install_dir/tsbridge"
 chmod 640 "$install_dir/config.yaml"
 chmod 600 "$install_dir/tsbridge.env"
 
+# $install_dir itself is 711 (not the more restrictive default) only
+# when webui's www/ subdirectory needs to stay reachable by nginx --
+# see tsbridge_apply_webui in _common.sh for why.
+if [ "$webui" -eq 1 ]; then
+    chmod 711 "$install_dir"
+    find "$install_dir/www" -type d -exec chmod 755 {} +
+    find "$install_dir/www" -type f -exec chmod 644 {} +
+else
+    chmod 750 "$install_dir"
+fi
+
 #=================================================
 # RESTORE THE DATA DIRECTORY
 #=================================================
@@ -36,6 +47,9 @@ ynh_script_progression "Restoring system configurations related to $app..."
 
 ynh_restore "/etc/systemd/system/$app.service"
 systemctl enable "$app.service" --quiet
+
+ynh_restore "/etc/nginx/conf.d/$domain.d/$app.conf"
+ynh_systemctl --service=nginx --action=reload
 
 yunohost service add "$app" --description="Tailscale-to-Unix-socket bridge"
 
